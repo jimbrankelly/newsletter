@@ -1,0 +1,54 @@
+[package]
+name = "newsletter"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/lib.rs"
+
+# Notice the double square brackets: it's an array in TOML's syntax.
+# We can only have one library in a project, but we can have multiple binaries!
+# If you want to manage multiple libraries in the same repository
+# have a look at the workspace feature - we'll cover it later on.
+[[bin]]
+path = "src/main.rs"
+name = "newsletter"
+
+[dependencies]
+actix-web = "4.13.0"
+chrono = "0.4.44"
+config = "0.15.19"
+secrecy = { version = "0.10.3", features = ["serde"] }
+serde = { version = "1.0.228", features = ["derive"] }
+tokio = { version = "1.50.0", features = ["macros", "rt-multi-thread"] }
+tracing = { version = "0.1.44", features = ["log"] }
+tracing-actix-web = "0.7.21"
+tracing-bunyan-formatter = "0.3.10"
+tracing-log = "0.2.0"
+tracing-subscriber = { version = "0.3.22", features = ["registry", "env-filter"] }
+uuid = { version = "1.22.0", features = ["v4"] }
+
+# Using table-like toml syntax to avoid a super-long line!
+[dependencies.sqlx]
+version = "0.8.6"
+default-features = false
+features = [
+#   "runtime-actix-rustls",
+    "runtime-tokio-rustls",
+    "macros", 
+    "postgres", 
+    "uuid", 
+    "chrono", 
+    "migrate",
+#    "offline"
+]
+
+[dev-dependencies]
+reqwest = "0.13.2"
+
+[profile.release]
+opt-level = "z"  # Optimize for size ("s" is also an option; experiment to see which is smaller)
+strip = true     # Automatically strip symbols from the binary
+lto = true       # Enable Link Time Optimization
+codegen-units = 1 # Disable parallel codegen to maximize LTO effectiveness (increases compile time)
+panic = "abort"  # Abort on panic instead of unwinding the stack, which saves space
