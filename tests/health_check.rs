@@ -44,7 +44,7 @@ async fn health_check_works() {
 }*/
 use std::sync::LazyLock;
 use sqlx::{PgPool, Executor, };
-use secrecy::ExposeSecret;
+//use secrecy::ExposeSecret;
 use uuid::Uuid;
 use newsletter::{
     configuration::DatabaseSettings,
@@ -99,11 +99,16 @@ async fn spawn_app() -> TestApp {
 
 pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
     // Create database
-    let mut connection = PgConnection::connect(
-        &config.connection_string_without_db().expose_secret()
+    let mut connection = PgConnection::connect_with(
+        &config.without_db()
     )
     .await
     .expect("Failed to connect to Postgres");
+    /*let mut connection = PgConnection::connect(
+        &config.connection_string_without_db().expose_secret()
+    )
+    .await
+    .expect("Failed to connect to Postgres");*/
 
     connection
         .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
@@ -111,8 +116,8 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .expect("Failed to create database.");
 
     // Migrate database
-    let connection_pool = PgPool::connect(
-        &config.connection_string().expose_secret()
+    let connection_pool = PgPool::connect_with(
+        config.with_db()
     )
     .await
     .expect("Failed to connect to Postgres.");
@@ -125,26 +130,6 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
     connection_pool
 }
 
-// chapter 3.5 additions
-/*#[tokio::test]
-async fn subscribe_returns_a_200_for_valid_form_data() {
-    // Arrange
-    let app_address = spawn_app();
-    let client = reqwest::Client::new();
-
-    // Act
-    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
-    let response = client
-        .post(&format!("{}/subscriptions", &app_address))
-        .header("Content-Type", "application/x-www-form-urlencoded")
-        .body(body)
-        .send()
-        .await
-        .expect("Failed to execute request.");
-
-    // Assert
-    assert_eq!(200, response.status().as_u16());
-}*/
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     // Arrange
