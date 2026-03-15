@@ -1,6 +1,6 @@
 /target
 .env
-/configuration
+/configuration/base.yaml
 /scripts
 spec.yaml
 spec.json
