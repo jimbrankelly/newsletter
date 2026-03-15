@@ -2,3 +2,5 @@
 .env
 /configuration
 /scripts
+spec.yaml
+spec.json
