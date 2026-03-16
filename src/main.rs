@@ -33,6 +33,14 @@ async fn main() -> std::io::Result<()> {
         // `connect_lazy_with` instead of `connect_lazy`
         .connect_lazy_with(configuration.database.with_db());
 
+    let _ = sqlx::migrate!("./migrations")
+        .run(&connection_pool)
+        .await
+        .unwrap_or_else(|e| {
+            tracing::warn!("Failed to migrate db: {:?}", e);
+            ()
+        } );
+
     let address = format!(
         "{}:{}", 
         configuration.application.host,
