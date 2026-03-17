@@ -17,6 +17,7 @@ name = "newsletter"
 [dependencies]
 actix-web = "4.13.0"
 chrono = "0.4.44"
+claim = "0.5.0"
 config = "0.15.19"
 secrecy = { version = "0.10.3", features = ["serde"] }
 serde = { version = "1.0.228", features = ["derive"] }
@@ -27,6 +28,7 @@ tracing-actix-web = "0.7.21"
 tracing-bunyan-formatter = "0.3.10"
 tracing-log = "0.2.0"
 tracing-subscriber = { version = "0.3.22", features = ["registry", "env-filter"] }
+unicode-segmentation = "1.12.0"
 uuid = { version = "1.22.0", features = ["v4"] }
 
 # Using table-like toml syntax to avoid a super-long line!
