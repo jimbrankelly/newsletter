@@ -54,6 +54,7 @@ fake = "5.1.0"
 quickcheck = "1.1.0"
 quickcheck_macros = "1.2.0"
 wiremock = "0.6.5"
+serde_json = "1.0.149"
 
 [profile.release]
 opt-level = "z"  # Optimize for size ("s" is also an option; experiment to see which is smaller)
