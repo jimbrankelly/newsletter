@@ -4,5 +4,5 @@ database:
   host: "localhost"
   port: 5452
   username: "postgres"
-  password: "sFpsswrd"
+  password: "password"
   database_name: "newsletter"
