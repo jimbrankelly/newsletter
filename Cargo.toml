@@ -19,6 +19,7 @@ actix-web = "4.13.0"
 chrono = "0.4.44"
 claim = "0.5.0"
 config = "0.15.19"
+reqwest = { version = "0.13.2", default-features = false, features = ["json", "rustls"] }
 secrecy = { version = "0.10.3", features = ["serde"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde-aux = "4.7.0"
@@ -31,6 +32,7 @@ tracing-subscriber = { version = "0.3.22", features = ["registry", "env-filter"]
 unicode-segmentation = "1.12.0"
 uuid = { version = "1.22.0", features = ["v4"] }
 validator = "0.20.0"
+
 
 # Using table-like toml syntax to avoid a super-long line!
 [dependencies.sqlx]
@@ -48,10 +50,10 @@ features = [
 ]
 
 [dev-dependencies]
-reqwest = "0.13.2"
 fake = "5.1.0"
 quickcheck = "1.1.0"
 quickcheck_macros = "1.2.0"
+wiremock = "0.6.5"
 
 [profile.release]
 opt-level = "z"  # Optimize for size ("s" is also an option; experiment to see which is smaller)

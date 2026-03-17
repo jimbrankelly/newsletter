@@ -49,6 +49,7 @@ use uuid::Uuid;
 use newsletter::{
     configuration::DatabaseSettings,
     telemetry::{ get_subscriber, init_subscriber, },
+    email_client::EmailClient,
 };
 
 static TRACING: LazyLock<()> = LazyLock::new(|| {
@@ -86,7 +87,15 @@ async fn spawn_app() -> TestApp {
     configuration.database.database_name = Uuid::new_v4().to_string();
     let pool = configure_database(&configuration.database).await;
 
-    let server = newsletter::startup::run(listener, pool.clone())
+    // Build a new email client
+    let sender_email = configuration.email_client.sender()
+            .expect("Invalid sender email address.");
+    let email_client = EmailClient::new(
+        configuration.email_client.base_url,
+        sender_email,
+        configuration.email_client.authorization_token,
+    );
+    let server = newsletter::startup::run(listener, pool.clone(), email_client)
         .expect("Failed to bind address");
     let _ = tokio::spawn(server);
     // We return the application address to the caller!

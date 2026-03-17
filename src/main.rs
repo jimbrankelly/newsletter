@@ -1,7 +1,8 @@
 use newsletter::startup::run;
 use newsletter::{
     configuration::get_configuration,
-    telemetry::{init_subscriber, get_subscriber,}, 
+    telemetry::{init_subscriber, get_subscriber,},
+    email_client::EmailClient,
 };
 use sqlx::postgres::PgPoolOptions;
 
@@ -41,6 +42,15 @@ async fn main() -> std::io::Result<()> {
             ()
         } );
 
+    // Build an `EmailClient` using `configuration`
+    let sender_email = configuration.email_client.sender()
+        .expect("Invalid sender email address.");
+    let email_client = EmailClient::new(
+        configuration.email_client.base_url,
+        sender_email,
+        configuration.email_client.authorization_token,
+    );
+
     let address = format!(
         "{}:{}", 
         configuration.application.host,
@@ -48,7 +58,7 @@ async fn main() -> std::io::Result<()> {
     );
 
     let listener = TcpListener::bind(address)?;
-    run(listener, connection_pool)?.await
+    run(listener, connection_pool, email_client)?.await
 }
 
 
