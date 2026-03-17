@@ -47,7 +47,7 @@ mod tests {
    // `.fake` method on `SafeEmail`
    use fake::faker::internet::en::SafeEmail;
    use fake::Fake;
-   use quickcheck::{Arbitrary, Gen};
+   //use quickcheck::{Arbitrary, Gen};
    
    #[test]
    fn valid_emails_are_parsed_successfully() {
