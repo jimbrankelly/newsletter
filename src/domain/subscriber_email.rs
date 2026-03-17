@@ -1,10 +1,15 @@
+use validator::ValidateEmail;
+
 #[derive(Debug)]
 pub struct SubscriberEmail(String);
 
 impl SubscriberEmail {
    pub fn parse(s: String) -> Result<SubscriberEmail, String> {
-      // TODO: add validation!
-      Ok(Self(s))
+      if s.validate_email() {
+         Ok(Self(s))
+      } else {
+         Err(format!("{} is not a valid subscriber email.", s))
+      }
    }
 }
 
@@ -36,4 +41,33 @@ mod tests {
       let email = "@domain.com".to_string();
       assert_err!(SubscriberEmail::parse(email));
    }
+
+   // We are importing the `SafeEmail` faker!
+   // We also need the `Fake` trait to get access to the 
+   // `.fake` method on `SafeEmail`
+   use fake::faker::internet::en::SafeEmail;
+   use fake::Fake;
+   use quickcheck::{Arbitrary, Gen};
+   
+   #[test]
+   fn valid_emails_are_parsed_successfully() {
+      let email = SafeEmail().fake();
+      claim::assert_ok!(SubscriberEmail::parse(email));
+   }
+
+   // Both `Clone` and `Debug` are required by `quickcheck`
+   /*#[derive(Debug, Clone)]
+   struct ValidEmailFixture(pub String);
+
+   impl Arbitrary for ValidEmailFixture {
+      fn arbitrary(g: &mut Gen) -> Self {
+         let email = SafeEmail().fake_with_rng(g);
+         Self(email)
+      }
+   }
+
+   #[quickcheck_macros::quickcheck]
+   fn valid_emails_are_parsed_successfully(valid_email: ValidEmailFixture) -> bool {
+      SubscriberEmail::parse(valid_email.0).is_ok()
+   }*/
 }

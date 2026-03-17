@@ -30,6 +30,7 @@ tracing-log = "0.2.0"
 tracing-subscriber = { version = "0.3.22", features = ["registry", "env-filter"] }
 unicode-segmentation = "1.12.0"
 uuid = { version = "1.22.0", features = ["v4"] }
+validator = "0.20.0"
 
 # Using table-like toml syntax to avoid a super-long line!
 [dependencies.sqlx]
@@ -48,6 +49,9 @@ features = [
 
 [dev-dependencies]
 reqwest = "0.13.2"
+fake = "5.1.0"
+quickcheck = "1.1.0"
+quickcheck_macros = "1.2.0"
 
 [profile.release]
 opt-level = "z"  # Optimize for size ("s" is also an option; experiment to see which is smaller)

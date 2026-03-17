@@ -11,6 +11,22 @@ pub struct FormData {
     name: String
 }
 
+impl TryFrom<FormData> for NewSubscriber {
+    type Error = String;
+    
+    fn try_from(value: FormData) -> Result<Self, Self::Error> {
+        let name = SubscriberName::parse(value.name)?;
+        let email = SubscriberEmail::parse(value.email)?;
+        Ok(Self { email, name })
+    }
+} 
+
+/*pub fn parse_subscriber(form: FormData) -> Result<NewSubscriber, String> {
+    let name = SubscriberName::parse(form.name)?;
+    let email = SubscriberEmail::parse(form.email)?;
+    Ok(NewSubscriber { email, name })
+}*/
+
 #[tracing::instrument(
     name = "Adding a new subscriber",
     skip(form, pool),
@@ -24,7 +40,7 @@ pub async fn subscribe(
     form: web::Form<FormData>,
     pool: web::Data<PgPool>,
 ) -> HttpResponse {
-    let name = match SubscriberName::parse(form.0.name) {
+    /*let name = match SubscriberName::parse(form.0.name) {
         Ok(name) => name,
 		// Return early if the name is invalid, with a 400
         Err(_) => return HttpResponse::BadRequest().finish(),
@@ -37,7 +53,11 @@ pub async fn subscribe(
     let new_subscriber = NewSubscriber {
         email: email,
         name,
-    };
+    };*/
+    let new_subscriber = match form.0.try_into() {
+		Ok(subscriber) => subscriber,
+		Err(_) => return HttpResponse::BadRequest().finish(),
+	};
     /*let new_subscriber = NewSubscriber {
         email: form.0.email,
         name: SubscriberName::parse(form.0.name).expect("Name validation failed."), //?,
