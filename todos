@@ -4,3 +4,8 @@ What happens if the subscription token is well-formatted but non-existent?
 Add validation on the incoming token, we are currently passing the raw user input straight into a query (thanks sqlx for protecting us from SQL injections <3);
 Use a proper templating solution for our emails (e.g. tera);
 Anything that comes to your mind!
+
+Access log in testing:
+export RUST_LOG="sqlx=error,info"
+export TEST_LOG=enabled
+cargo t subscribe_fails_if_there_is_a_fatal_database_error | bunyan
