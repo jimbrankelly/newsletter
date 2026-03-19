@@ -23,11 +23,27 @@ impl TryFrom<FormData> for NewSubscriber {
     }
 } 
 
-/*pub fn parse_subscriber(form: FormData) -> Result<NewSubscriber, String> {
-    let name = SubscriberName::parse(form.name)?;
-    let email = SubscriberEmail::parse(form.email)?;
-    Ok(NewSubscriber { email, name })
-}*/
+#[derive(thiserror::Error)]
+pub enum SubscribeError {
+    #[error("{0}")]
+    ValidationError(String),
+    #[error("Failed to acquire a Postgres connection from the pool")]
+    PoolError(#[source] sqlx::Error),
+    #[error("Failed to insert new subscriber in the database.")]
+    InsertSubscriberError(#[source] sqlx::Error),
+    #[error("Failed to store the confirmation token for a new subscriber.")]
+    StoreTokenError(#[from] StoreTokenError),
+    #[error("Failed to commit SQL transaction to store a new subscriber.")]
+    TransactionCommitError(#[source] sqlx::Error),
+    #[error("Failed to send a confirmation email.")]
+    SendEmailError(#[from] reqwest::Error),
+}
+
+impl std::fmt::Debug for SubscribeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        error_chain_fmt(self, f)
+    }
+}
 
 #[tracing::instrument(
     name = "Adding a new subscriber",
@@ -44,7 +60,8 @@ pub async fn subscribe(
     base_url: web::Data<ApplicationBaseUrl>,
 ) -> Result<HttpResponse, SubscribeError> {
 
-    let new_subscriber = form.0.try_into()?;
+    let new_subscriber = form.0.try_into()
+        .map_err(|e| SubscribeError::ValidationError(e))?;
 
     let mut transaction = pool.begin().await
         .map_err(|e| SubscribeError::PoolError(e))?;
@@ -221,7 +238,7 @@ fn error_chain_fmt(
 /*#[derive(Debug)]
 struct SubscribeError {}*/
 //#[derive(Debug)]
-pub enum SubscribeError {
+/*pub enum SubscribeError {
     ValidationError(String),
     //DatabaseError(sqlx::Error),
     StoreTokenError(StoreTokenError),
@@ -279,7 +296,7 @@ impl std::error::Error for SubscribeError {
             SubscribeError::TransactionCommitError(e) => Some(e),
         }
     }
-}
+}*/
 
 use actix_web::http::StatusCode;
 //impl ResponseError for SubscribeError {}
@@ -296,7 +313,7 @@ impl ResponseError for SubscribeError {
     }
 }
 
-impl From<reqwest::Error> for SubscribeError {
+/*impl From<reqwest::Error> for SubscribeError {
     fn from(e: reqwest::Error) -> Self {
         Self::SendEmailError(e)
     }
@@ -319,3 +336,4 @@ impl From<String> for SubscribeError {
         Self::ValidationError(e)
     }
 }
+*/
