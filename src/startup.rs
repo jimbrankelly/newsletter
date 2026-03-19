@@ -8,7 +8,7 @@ use sqlx::{PgPool, postgres::PgPoolOptions,};
 use crate::{
   configuration::{Settings, DatabaseSettings, },
   email_client::EmailClient,
-  routes::{health_check, subscribe, confirm},
+  routes::{confirm, health_check, publish_newsletter, subscribe, },
 };
 
 // A new type to hold the newly built server and its port 
@@ -99,6 +99,7 @@ pub fn run(
         App::new()
             .wrap(TracingLogger::default())
             .route("/health_check", web::get().to(health_check))
+            .route("/newsletters", web::post().to(publish_newsletter))
             .route("/subscriptions", web::post().to(subscribe))
             .route("/subscriptions/confirm", web::get().to(confirm))
             .app_data(connection.clone())
