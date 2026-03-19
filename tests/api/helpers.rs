@@ -86,12 +86,23 @@ impl TestApp {
     }
 
     pub async fn post_newsletters(&self, body: serde_json::Value) -> reqwest::Response {
+        let (username, password) = self.test_user().await;
         reqwest::Client::new()
             .post(&format!("{}/newsletters", &self.address))
+            // `reqwest` does all the encoding/formatting heavy-lifting for us.
+            .basic_auth(username, Some(password))
             .json(&body)
             .send()
             .await
             .expect("Failed to execute request.")
+    }
+
+    pub async fn test_user(&self) -> (String, String) {
+        let row = sqlx::query!("SELECT username, password FROM users LIMIT 1",)
+            .fetch_one(&self.db_pool)
+            .await
+            .expect("Failed to create test users.");
+        (row.username, row.password)
     }
 
 }
@@ -120,41 +131,14 @@ pub async fn spawn_app() -> TestApp {
     let application_port = application.port();
     let _ = tokio::spawn(application.run_until_stopped());
 
-    TestApp {
+    let test_app = TestApp {
         address: format!("http://localhost:{}", application_port),
         port: application_port,
         db_pool: get_connection_pool(&configuration.database),
         email_server,
-    }
-
-    /*let _ = *TRACING;
-
-    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
-    // We retrieve the port assigned to us by the OS
-    let port = listener.local_addr().unwrap().port();
-
-    let mut configuration = get_configuration().expect("Failed to read configuration.");
-    configuration.database.database_name = Uuid::new_v4().to_string();
-    let pool = configure_database(&configuration.database).await;
-
-    // Build a new email client
-    let sender_email = configuration.email_client.sender()
-            .expect("Invalid sender email address.");
-    let timeout = configuration.email_client.timeout();
-    let email_client = EmailClient::new(
-        configuration.email_client.base_url,
-        sender_email,
-        configuration.email_client.authorization_token,
-        timeout,
-    );
-    let server = newsletter::startup::run(listener, pool.clone(), email_client)
-        .expect("Failed to bind address");
-    let _ = tokio::spawn(server);
-    // We return the application address to the caller!
-    TestApp {
-        address:     format!("http://127.0.0.1:{}", port),
-        db_pool: pool,
-    }*/
+    };
+    add_test_user(&test_app.db_pool).await;
+    test_app
 
 }
 
@@ -189,4 +173,17 @@ async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .expect("Failed to migrate the database");
 
     connection_pool
+}
+
+async fn add_test_user(pool: &PgPool) {
+    sqlx::query!(
+        "INSERT INTO users (user_id, username, password)
+        VALUES ($1, $2, $3)",
+        Uuid::new_v4(),
+        Uuid::new_v4().to_string(),
+        Uuid::new_v4().to_string(),
+    )
+    .execute(pool)
+    .await
+    .expect("Failed to create test users.");
 }
