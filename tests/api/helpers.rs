@@ -195,7 +195,10 @@ async fn configure_database(config: &DatabaseSettings) -> PgPool {
 }*/
 
 //use sha3::Digest;
-use argon2::{Argon2, PasswordHasher, };
+use argon2::{
+    Argon2, PasswordHasher, 
+    password_hash::{SaltString, rand_core::OsRng,}
+};
 use secrecy::{ExposeSecret, SecretString, };
 
 pub struct TestUser {
@@ -219,7 +222,7 @@ impl TestUser {
         );
         let password_hash = format!("{:x}", password_hash);*/
 
-        let salt = SaltString::generate(&mut rand::rng());
+        let salt = SaltString::generate(&mut OsRng);
         // We don't care about the exact Argon2 parameters here
         // given that it's for testing purposes!
         let password_hash = Argon2::default()
