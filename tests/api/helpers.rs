@@ -176,6 +176,13 @@ impl TestApp {
             .expect("Failed to execute request.")
     }
 
+    pub async fn post_logout(&self) -> reqwest::Response {
+        self.api_client
+            .post(&format!("{}/admin/logout", &self.address))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
 }
 
 pub async fn spawn_app() -> TestApp {
@@ -254,20 +261,6 @@ async fn configure_database(config: &DatabaseSettings) -> PgPool {
     connection_pool
 }
 
-/*async fn add_test_user(pool: &PgPool) {
-    sqlx::query!(
-        "INSERT INTO users (user_id, username, password_hash)
-        VALUES ($1, $2, $3)",
-        Uuid::new_v4(),
-        Uuid::new_v4().to_string(),
-        Uuid::new_v4().to_string(),
-    )
-    .execute(pool)
-    .await
-    .expect("Failed to create test users.");
-}*/
-
-//use sha3::Digest;
 use argon2::{
     Algorithm, Params, Version,
     Argon2, PasswordHasher, 

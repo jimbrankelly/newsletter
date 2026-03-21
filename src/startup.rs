@@ -19,7 +19,7 @@ use crate::{
         admin_dashboard,
         change_password, change_password_form,
         confirm, health_check, home, 
-        login_form, login,
+        login_form, login, log_out,
         publish_newsletter, subscribe, 
     },
 };
@@ -127,6 +127,7 @@ pub async fn run(
             .wrap(TracingLogger::default())
             .route("/", web::get().to(home))
             .route("/admin/dashboard", web::get().to(admin_dashboard))
+            .route("/admin/logout", web::post().to(log_out))
             .route("/admin/password", web::get().to(change_password_form))
             .route("/admin/password", web::post().to(change_password))
             .route("/login", web::get().to(login_form))

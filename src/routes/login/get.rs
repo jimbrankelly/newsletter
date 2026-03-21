@@ -11,7 +11,8 @@ pub async fn login_form(
     flash_messages: IncomingFlashMessages,
 ) -> HttpResponse {
     let mut error_html = String::new();
-    for m in flash_messages.iter().filter(|m| m.level() == Level::Error) {
+    for m in flash_messages.iter() {
+    //for m in flash_messages.iter().filter(|m| m.level() == Level::Error) {
         writeln!(error_html, "<p><i>{}</i></p>", m.content()).unwrap();
     }
     /*let error_html = match request.cookie("_flash") {
