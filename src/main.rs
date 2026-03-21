@@ -5,7 +5,7 @@ use newsletter::{
 };
 
 #[tokio::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> anyhow::Result<()>{
     let subscriber = get_subscriber(
         "newsletter".into(), 
         "info".into(), 

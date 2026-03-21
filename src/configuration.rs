@@ -7,6 +7,10 @@ pub struct Settings {
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
     pub email_client: EmailClientSettings,
+    // We have not created a stand-alone settings struct for Redis,
+    // let's see if we need more than the uri first!
+    // The URI is marked as secret because it may embed a password.
+    pub redis_uri: SecretString,
 }
 
 

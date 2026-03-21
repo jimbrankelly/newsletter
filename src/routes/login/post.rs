@@ -1,4 +1,5 @@
 //! src/routes/login/post.rs
+//use actix_session::Session;
 use actix_web::{
     //cookie::Cookie,
     error::InternalError,
@@ -13,6 +14,7 @@ use sqlx::PgPool;
 use crate::{
     authentication::{ AuthError, Credentials, validate_credentials },
     routes::error_chain_fmt,
+    session_state::TypedSession,
     //startup::HmacSecret,
 };
 
@@ -23,13 +25,13 @@ pub struct FormData {
 }
 
 #[tracing::instrument(
-    skip(form, pool),
+    skip(form, pool, session),
     fields(username=tracing::field::Empty, user_id=tracing::field::Empty)
 )]
 pub async fn login(
     form: web::Form<FormData>, 
     pool: web::Data<PgPool>,
-    //secret: web::Data<HmacSecret>,
+    session: TypedSession,
 ) -> Result<HttpResponse, InternalError<LoginError>>  {
     let credentials = Credentials {
         username: form.0.username,
@@ -39,11 +41,17 @@ pub async fn login(
         .record("username", &tracing::field::display(&credentials.username));
 
     match validate_credentials(credentials, &pool).await {
-        Ok(_user_id) => {
+        Ok(user_id) => {
             // [...]
+            session.renew();
+            session
+                .insert_user_id(user_id)
+                .map_err(|e| 
+                    login_redirect(LoginError::UnexpectedError(e.into()))
+                )?;
             // We need to Ok-wrap again
             Ok(HttpResponse::SeeOther()
-                .insert_header((LOCATION, "/"))
+                .insert_header((LOCATION, "/admin/dashboard"))
                 .finish())
         }
         Err(e) => {
@@ -51,62 +59,19 @@ pub async fn login(
                 AuthError::InvalidCredentials(_) => LoginError::AuthError(e.into()),
                 AuthError::UnexpectedError(_) => LoginError::UnexpectedError(e.into()),
             };
-            FlashMessage::error(e.to_string()).send();
-            let response = HttpResponse::SeeOther()
-                .insert_header((LOCATION, "/login"))
-                //.insert_header(("Set-Cookie", format!("_flash={e}")))
-                //.cookie(Cookie::new("_flash", e.to_string()))
-                .finish();
-            Err(InternalError::from_response(e, response))
+            Err(login_redirect(e))
         }
-        /*Err(e) => {
-            // [...]
-            let query_string = format!(
-                "error={}", 
-                urlencoding::Encoded::new(e.to_string())
-            );
-            // We need the secret here - how do we get it?
-            //let secret: &[u8] = todo!();
-            let hmac_tag = {
-                let mut mac = Hmac::<sha2::Sha256>::new_from_slice(
-                    secret.0.expose_secret().as_bytes()
-                ).unwrap();
-                //let mut mac = Hmac::<sha2::Sha256>::new_from_slice(secret).unwrap();
-                mac.update(query_string.as_bytes());
-                mac.finalize().into_bytes()
-            };
-
-            let response = HttpResponse::SeeOther()
-                .insert_header((
-                    LOCATION,
-                    format!("/login?{}&tag={:x}", query_string, hmac_tag),
-                ))
-                .finish();
-            Err(InternalError::from_response(e.into(), response))
-        }*/
     }
 
-    /*let user_id = validate_credentials(credentials, &pool)
-        .await
-        .map_err(|e| match e {
-            AuthError::InvalidCredentials(_) => LoginError::AuthError(e.into()),
-            AuthError::UnexpectedError(_) => LoginError::UnexpectedError(e.into()),
-        })?;*/
-    /* {
-        Ok(user_id) => {
-            tracing::Span::current()
-                .record("user_id", &tracing::field::display(&user_id));
-            HttpResponse::SeeOther()
-                .insert_header((LOCATION, "/"))
-                .finish()
-        }
-        Err(_) => {
-            todo!()
-        }
-    }*/
-    /*Ok(HttpResponse::SeeOther()
-        .insert_header((LOCATION, "/"))
-        .finish())*/
+}
+
+// Redirect to the login page with an error message.
+fn login_redirect(e: LoginError) -> InternalError<LoginError> {
+    FlashMessage::error(e.to_string()).send();
+    let response = HttpResponse::SeeOther()
+        .insert_header((LOCATION, "/login"))
+        .finish();
+    InternalError::from_response(e, response)
 }
 
 #[derive(thiserror::Error)]
@@ -131,33 +96,3 @@ impl From<AuthError> for LoginError {
         }
     }
 }
-
-/*impl ResponseError for LoginError {
-    fn error_response(&self) -> HttpResponse {
-        //let encoded_error = urlencoding::Encoded::new(self.to_string());
-        let query_string = format!(
-            "error={}", 
-            urlencoding::Encoded::new(self.to_string())
-        );
-        // We need the secret here - how do we get it?
-        let secret: &[u8] = todo!();
-        let hmac_tag = {
-            let mut mac = Hmac::<sha2::Sha256>::new_from_slice(secret).unwrap();
-            mac.update(query_string.as_bytes());
-            mac.finalize().into_bytes()
-        };
-        HttpResponse::build(self.status_code())
-            // Appending the hexadecimal representation of the HMAC tag to the 
-            // query string as an additional query parameter.
-            .insert_header((
-                LOCATION, 
-                format!("/login?{}&tag={:x}", query_string, hmac_tag)
-            ))
-            //.insert_header((LOCATION, format!("/login?error={}", encoded_error)))
-            .finish()
-    }
-
-    fn status_code(&self) -> StatusCode {
-        StatusCode::SEE_OTHER
-    }
-}*/
