@@ -6,6 +6,7 @@ pub mod routes;
 pub mod startup;
 pub mod session_state;
 pub mod telemetry;
+pub mod utils;
 
 /*use actix_web::{web, App, HttpResponse, HttpServer};
 use actix_web::dev::Server;

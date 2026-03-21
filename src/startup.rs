@@ -17,6 +17,7 @@ use crate::{
     email_client::EmailClient,
     routes::{
         admin_dashboard,
+        change_password, change_password_form,
         confirm, health_check, home, 
         login_form, login,
         publish_newsletter, subscribe, 
@@ -126,6 +127,8 @@ pub async fn run(
             .wrap(TracingLogger::default())
             .route("/", web::get().to(home))
             .route("/admin/dashboard", web::get().to(admin_dashboard))
+            .route("/admin/password", web::get().to(change_password_form))
+            .route("/admin/password", web::post().to(change_password))
             .route("/login", web::get().to(login_form))
             .route("/login", web::post().to(login))
             .route("/health_check", web::get().to(health_check))

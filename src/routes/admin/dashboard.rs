@@ -9,14 +9,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::session_state::TypedSession;
-
-// Return an opaque 500 while preserving the error's root cause for logging.
-fn e500<T>(e: T) -> actix_web::Error 
-where
-    T: std::fmt::Debug + std::fmt::Display + 'static
-{
-    actix_web::error::ErrorInternalServerError(e)
-}
+use crate::utils::e500;
 
 pub async fn admin_dashboard(
     session: TypedSession,
@@ -32,7 +25,7 @@ pub async fn admin_dashboard(
     Ok(HttpResponse::Ok()
         .content_type(ContentType::html())
         .body(format!(
-r#"<!DOCTYPE html>
+            r#"<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
@@ -40,10 +33,13 @@ r#"<!DOCTYPE html>
 </head>
 <body>
     <p>Welcome {username}!</p>
+    <p>Available actions:</p>
+    <ol>
+        <li><a href="/admin/password">Change password</a></li>
+    </ol>
 </body>
-</html>"#
-        ))
-    )
+</html>"#,
+        )))
 }
 
 #[tracing::instrument(name = "Get username", skip(pool))]
