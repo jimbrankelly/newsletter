@@ -1,4 +1,8 @@
-use actix_web::{web, web::Data, App, HttpServer};
+use actix_web::{
+    App, HttpServer,
+    middleware::from_fn,
+    web, web::Data, 
+};
 use actix_web::cookie::Key;
 use actix_web::dev::Server;
 use actix_web_flash_messages::{
@@ -13,6 +17,7 @@ use sqlx::{PgPool, postgres::PgPoolOptions,};
 use secrecy::{SecretString, ExposeSecret, };
 
 use crate::{
+    authentication::reject_anonymous_users,
     configuration::{Settings, DatabaseSettings, },
     email_client::EmailClient,
     routes::{
@@ -118,24 +123,37 @@ pub async fn run(
     ).build();
     let message_framework = FlashMessagesFramework::builder(
         message_store).build();
-    let redis_store = RedisSessionStore::new(redis_uri.expose_secret()).await?;
+    let redis_store = RedisSessionStore::new(
+        redis_uri.expose_secret()
+    ).await?;
 
     let server = HttpServer::new(move || 
         App::new()
             .wrap(message_framework.clone())
-            .wrap(SessionMiddleware::new(redis_store.clone(), secret_key.clone()))
+            .wrap(SessionMiddleware::new(
+                redis_store.clone(), 
+                secret_key.clone()
+            ))
             .wrap(TracingLogger::default())
             .route("/", web::get().to(home))
-            .route("/admin/dashboard", web::get().to(admin_dashboard))
-            .route("/admin/logout", web::post().to(log_out))
-            .route("/admin/password", web::get().to(change_password_form))
-            .route("/admin/password", web::post().to(change_password))
+            //.route("/admin/dashboard", web::get().to(admin_dashboard))
+            //.route("/admin/logout", web::post().to(log_out))
+            //.route("/admin/password", web::get().to(change_password_form))
+            //.route("/admin/password", web::post().to(change_password))
             .route("/login", web::get().to(login_form))
             .route("/login", web::post().to(login))
             .route("/health_check", web::get().to(health_check))
             .route("/newsletters", web::post().to(publish_newsletter))
             .route("/subscriptions", web::post().to(subscribe))
             .route("/subscriptions/confirm", web::get().to(confirm))
+            .service(
+                web::scope("/admin")
+                    .wrap(from_fn(reject_anonymous_users))
+                    .route("/dashboard", web::get().to(admin_dashboard))
+                    .route("/password", web::get().to(change_password_form))
+                    .route("/password", web::post().to(change_password))
+                    .route("/logout", web::post().to(log_out)),
+            )
             .app_data(connection.clone())
             .app_data(email_client.clone())
             .app_data(base_url.clone())
