@@ -1,14 +1,18 @@
-use actix_web::{web, App, HttpServer};
+use actix_web::{web, web::Data, App, HttpServer};
 //use actix_web::middleware::Logger;
 use tracing_actix_web::TracingLogger;
 use actix_web::dev::Server;
 use std::net::TcpListener;
 use sqlx::{PgPool, postgres::PgPoolOptions,};
+use secrecy::SecretString;
 
 use crate::{
-  configuration::{Settings, DatabaseSettings, },
-  email_client::EmailClient,
-  routes::{confirm, health_check, publish_newsletter, subscribe, },
+    configuration::{Settings, DatabaseSettings, },
+    email_client::EmailClient,
+    routes::{confirm, health_check, home, 
+        login_form, login,
+        publish_newsletter, subscribe, 
+    },
 };
 
 // A new type to hold the newly built server and its port 
@@ -53,6 +57,7 @@ impl Application {
         connection_pool, 
         email_client,
         configuration.application.base_url,
+        configuration.application.hmac_secret,
       )?;
 
         // We "save" the bound port in one of `Application`'s fields
@@ -89,15 +94,19 @@ pub fn run(
     connection_pool: PgPool,
     email_client: EmailClient,
     base_url: String,
+    hmac_secret: SecretString,
 ) -> Result<Server, std::io::Error> {
     // Wrap the connection in a smart pointer
-    let connection = web::Data::new(connection_pool);
-    let email_client = web::Data::new(email_client);
-    let base_url = web::Data::new(ApplicationBaseUrl(base_url));
+    let connection = Data::new(connection_pool);
+    let email_client = Data::new(email_client);
+    let base_url = Data::new(ApplicationBaseUrl(base_url));
 
     let server = HttpServer::new(move || 
         App::new()
             .wrap(TracingLogger::default())
+            .route("/", web::get().to(home))
+            .route("/login", web::get().to(login_form))
+            .route("/login", web::post().to(login))
             .route("/health_check", web::get().to(health_check))
             .route("/newsletters", web::post().to(publish_newsletter))
             .route("/subscriptions", web::post().to(subscribe))
@@ -105,9 +114,13 @@ pub fn run(
             .app_data(connection.clone())
             .app_data(email_client.clone())
             .app_data(base_url.clone())
+            .app_data(Data::new(HmacSecret(hmac_secret.clone())))
     )
     .listen(listener)?
     .run();
 
     Ok(server)
 }
+
+#[derive(Clone)]
+pub struct HmacSecret(pub SecretString);
