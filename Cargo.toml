@@ -26,7 +26,6 @@ hex = "0.4.3"
 hmac = { version = "0.12.1", features = ["std"] }
 htmlescape = "0.3.1"
 rand = { version = "0.10.0", features=["std_rng"] }
-reqwest = { version = "0.13.2", default-features = false, features = ["json", "rustls"] }
 secrecy = { version = "0.10.3", features = ["serde"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde-aux = "4.7.0"
@@ -58,6 +57,11 @@ features = [
     "migrate",
 #    "offline"
 ]
+
+[dependencies.reqwest]
+version = "0.13.2"
+default-features = false
+features = ["json", "rustls", "cookies", "form"]
 
 [dev-dependencies]
 fake = "5.1.0"

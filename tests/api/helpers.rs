@@ -2,6 +2,7 @@ use std::sync::LazyLock;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use wiremock::MockServer;
 use uuid::Uuid;
+use serde::Serialize;
 
 use newsletter::{
     configuration::{DatabaseSettings, get_configuration, },
@@ -44,6 +45,23 @@ pub struct ConfirmationLinks {
 }
 
 impl TestApp {
+    pub async fn post_login<T>(&self, body: &T) -> reqwest::Response
+    where
+        T: Serialize + ?Sized,
+    {
+        reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .unwrap()
+            .post(&format!("{}/login", &self.address))
+            // This `reqwest` method makes sure that the body is URL-encoded
+            // and the `Content-Type` header is set accordingly.
+            .form(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+
     pub async fn post_subscriptions(&self, body: String) -> reqwest::Response {
         reqwest::Client::new()
             .post(&format!("{}/subscriptions", &self.address))
@@ -246,4 +264,9 @@ impl TestUser {
         .await
         .expect("Failed to store test user.");
     }
+}
+
+pub fn assert_is_redirect_to(response: &reqwest::Response, location: &str) {
+    assert_eq!(response.status().as_u16(), 303);
+    assert_eq!(response.headers().get("Location").unwrap(), location);
 }

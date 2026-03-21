@@ -1,17 +1,18 @@
 //! src/routes/login/post.rs
 use actix_web::{
+    cookie::Cookie,
     error::InternalError,
     HttpResponse, web, 
     http::{header::LOCATION,  },
 };
-use hmac::{Hmac, Mac, };
-use secrecy::{SecretString, ExposeSecret, };
+//use hmac::{Hmac, Mac, };
+use secrecy::{SecretString,  };
 use sqlx::PgPool;
 
 use crate::{
     authentication::{ AuthError, Credentials, validate_credentials },
     routes::error_chain_fmt,
-    startup::HmacSecret,
+    //startup::HmacSecret,
 };
 
 #[derive(serde::Deserialize)]
@@ -21,13 +22,13 @@ pub struct FormData {
 }
 
 #[tracing::instrument(
-    skip(form, pool, secret),
+    skip(form, pool),
     fields(username=tracing::field::Empty, user_id=tracing::field::Empty)
 )]
 pub async fn login(
     form: web::Form<FormData>, 
     pool: web::Data<PgPool>,
-    secret: web::Data<HmacSecret>,
+    //secret: web::Data<HmacSecret>,
 ) -> Result<HttpResponse, InternalError<LoginError>>  {
     let credentials = Credentials {
         username: form.0.username,
@@ -45,6 +46,18 @@ pub async fn login(
                 .finish())
         }
         Err(e) => {
+            let e = match e {
+                AuthError::InvalidCredentials(_) => LoginError::AuthError(e.into()),
+                AuthError::UnexpectedError(_) => LoginError::UnexpectedError(e.into()),
+            };
+            let response = HttpResponse::SeeOther()
+                .insert_header((LOCATION, "/login"))
+                //.insert_header(("Set-Cookie", format!("_flash={e}")))
+                .cookie(Cookie::new("_flash", e.to_string()))
+                .finish();
+            Err(InternalError::from_response(e, response))
+        }
+        /*Err(e) => {
             // [...]
             let query_string = format!(
                 "error={}", 
@@ -68,7 +81,7 @@ pub async fn login(
                 ))
                 .finish();
             Err(InternalError::from_response(e.into(), response))
-        }
+        }*/
     }
 
     /*let user_id = validate_credentials(credentials, &pool)
