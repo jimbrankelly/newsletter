@@ -1,10 +1,11 @@
 //! src/routes/login/post.rs
 use actix_web::{
-    cookie::Cookie,
+    //cookie::Cookie,
     error::InternalError,
     HttpResponse, web, 
     http::{header::LOCATION,  },
 };
+use actix_web_flash_messages::FlashMessage;
 //use hmac::{Hmac, Mac, };
 use secrecy::{SecretString,  };
 use sqlx::PgPool;
@@ -50,10 +51,11 @@ pub async fn login(
                 AuthError::InvalidCredentials(_) => LoginError::AuthError(e.into()),
                 AuthError::UnexpectedError(_) => LoginError::UnexpectedError(e.into()),
             };
+            FlashMessage::error(e.to_string()).send();
             let response = HttpResponse::SeeOther()
                 .insert_header((LOCATION, "/login"))
                 //.insert_header(("Set-Cookie", format!("_flash={e}")))
-                .cookie(Cookie::new("_flash", e.to_string()))
+                //.cookie(Cookie::new("_flash", e.to_string()))
                 .finish();
             Err(InternalError::from_response(e, response))
         }

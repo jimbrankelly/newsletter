@@ -1,10 +1,15 @@
 use actix_web::{web, web::Data, App, HttpServer};
+use actix_web::cookie::Key;
+use actix_web::dev::Server;
+use actix_web_flash_messages::{
+    FlashMessagesFramework, 
+    storage::CookieMessageStore, 
+};
 //use actix_web::middleware::Logger;
 use tracing_actix_web::TracingLogger;
-use actix_web::dev::Server;
 use std::net::TcpListener;
 use sqlx::{PgPool, postgres::PgPoolOptions,};
-use secrecy::SecretString;
+use secrecy::{SecretString, ExposeSecret, };
 
 use crate::{
     configuration::{Settings, DatabaseSettings, },
@@ -101,8 +106,15 @@ pub fn run(
     let email_client = Data::new(email_client);
     let base_url = Data::new(ApplicationBaseUrl(base_url));
 
+    let message_store = CookieMessageStore::builder(
+        Key::from(hmac_secret.expose_secret().as_bytes())
+    ).build();
+    let message_framework = FlashMessagesFramework::builder(
+        message_store).build();
+
     let server = HttpServer::new(move || 
         App::new()
+            .wrap(message_framework.clone())
             .wrap(TracingLogger::default())
             .route("/", web::get().to(home))
             .route("/login", web::get().to(login_form))

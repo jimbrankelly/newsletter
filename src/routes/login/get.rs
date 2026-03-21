@@ -1,18 +1,26 @@
 //! src/routes/login/get.rs
 use actix_web::{
     http::header::ContentType,
-    HttpResponse, HttpRequest, 
-    cookie::Cookie,
+    HttpResponse, 
+    //cookie::Cookie,
 };
+use actix_web_flash_messages::{IncomingFlashMessages, Level};
+use std::fmt::Write;
 
-pub async fn login_form(request: HttpRequest) -> HttpResponse {
-    let error_html = match request.cookie("_flash") {
+pub async fn login_form(
+    flash_messages: IncomingFlashMessages,
+) -> HttpResponse {
+    let mut error_html = String::new();
+    for m in flash_messages.iter().filter(|m| m.level() == Level::Error) {
+        writeln!(error_html, "<p><i>{}</i></p>", m.content()).unwrap();
+    }
+    /*let error_html = match request.cookie("_flash") {
         None => "".into(),
         Some(cookie) => {
             format!("<p><i>{}</i></p>", cookie.value())
         }
-    };
-    let mut response = HttpResponse::Ok()
+    };*/
+    HttpResponse::Ok()
         .content_type(ContentType::html())
         .body(format!(
 r#"<!DOCTYPE html>
@@ -42,12 +50,12 @@ r#"<!DOCTYPE html>
     </form>
 </body>
 </html>"#,        
-        ));
+        ))
 
-    response
+    /*response
         .add_removal_cookie(&Cookie::new("_flash", ""))
         .unwrap();
-    response
+    response*/
 }
 
 /*use actix_web::{
