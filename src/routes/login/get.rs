@@ -4,7 +4,7 @@ use actix_web::{
     HttpResponse, 
     //cookie::Cookie,
 };
-use actix_web_flash_messages::{IncomingFlashMessages, Level};
+use actix_web_flash_messages::IncomingFlashMessages;
 use std::fmt::Write;
 
 pub async fn login_form(

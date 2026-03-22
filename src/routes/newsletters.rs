@@ -135,12 +135,12 @@ pub struct Content {
     text: String
 }
 
-struct ConfirmedSubscriber {
-    email: SubscriberEmail,
+pub struct ConfirmedSubscriber {
+    pub email: SubscriberEmail,
 }
 
 #[tracing::instrument(name = "Get confirmed subscribers", skip(pool))]
-async fn get_confirmed_subscribers(
+pub async fn get_confirmed_subscribers(
     pool: &PgPool,
 ) -> Result<Vec<Result<ConfirmedSubscriber, anyhow::Error>>, anyhow::Error> {
 

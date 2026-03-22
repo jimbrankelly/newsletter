@@ -5,6 +5,18 @@ Add validation on the incoming token, we are currently passing the raw user inpu
 Use a proper templating solution for our emails (e.g. tera);
 Anything that comes to your mind!
 
+Chapter 10 todos:
+i) Add a Send a newsletter issue link to the admin dashboard; -- done
+ii)Add an HTML form at GET /admin/newsletters to submit a new issue;
+iii)Adapt POST /newsletters to process the form data:
+
+    Change the route to POST /admin/newsletters;
+    Migrate from 'Basic' to session-based authentication;
+    Use the Form extractor (application/x-www-form-urlencoded) instead of the Json extractor (application/json) to handle the request body;
+    Adapt the test suite.
+
+
+
 Access log in testing:
 export RUST_LOG="sqlx=error,info"
 export TEST_LOG=enabled
