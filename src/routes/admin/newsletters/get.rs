@@ -24,7 +24,7 @@ pub async fn publish_newsletter_form(
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <title>Issue a newsletter</title>
-    <link rel="stylesheet" href="/css/style.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/style.css" type="text/css">
 </head>
 <body>
     {msg_html}
@@ -38,7 +38,7 @@ pub async fn publish_newsletter_form(
         </label>
         <br>
         <label>Html Content
-            <textarea
+            <textarea class="content"
                 type="text"
                 placeholder="Enter newsletter html content"
                 name="content_html"
@@ -46,7 +46,7 @@ pub async fn publish_newsletter_form(
             </textarea>
         </label>
         <label>Text Content
-            <textarea
+            <textarea class="content"
                 type="text"
                 placeholder="Enter newsletter text content"
                 name="content_text"

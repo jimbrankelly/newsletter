@@ -5,3 +5,29 @@ body {
 h1 {
     color: navy;
 }
+
+/*.content::placeholder {
+  color: blue;
+  font-size: 1.2em;
+  font-weight: bold;
+}*/
+textarea::placeholder { color: gray; }
+
+textarea {
+  width: 100%; /* Makes the textarea span the full width of its container */
+  height: 150px; /* Sets a fixed initial height */
+  padding: 12px; /* Adds inner spacing */
+  box-sizing: border-box; /* Ensures padding is part of the width calculation */
+  border: 2px solid #ccc; /* Adds a visible border */
+  border-radius: 4px; /* Rounds the corners */
+  background-color: #f8f8f8; /* Sets a light gray background */
+  font-size: 16px; /* Sets the text size */
+  resize: none; /* Disables the user-controlled resize handle */
+  field-sizing: content
+}
+
+/* Style when the textarea is in focus (clicked on) */
+textarea:focus {
+  outline: none; /* Removes default browser outline */
+  border-color: #5cb3fd; /* Changes border color on focus */
+}

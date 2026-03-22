@@ -1,4 +1,4 @@
-use actix_files::Files;
+use actix_files::{Files, NamedFile};
 use actix_web::{
     App, HttpServer,
     middleware::from_fn,
@@ -139,7 +139,8 @@ pub async fn run(
                 secret_key.clone()
             ))
             .wrap(TracingLogger::default())
-            .service(Files::new("/", "./static").show_files_listing())
+            .service(Files::new("/static", "./static").show_files_listing())
+            .route("/favicon.ico", web::get().to(favicon))        
             .route("/", web::get().to(home))
             //.route("/admin/dashboard", web::get().to(admin_dashboard))
             //.route("/admin/logout", web::post().to(log_out))
@@ -170,6 +171,10 @@ pub async fn run(
     .run();
 
     Ok(server)
+}
+
+async fn favicon() -> std::io::Result<NamedFile> {
+    Ok(NamedFile::open("static/favicon.ico")?)
 }
 
 #[derive(Clone)]
