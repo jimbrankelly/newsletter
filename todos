@@ -7,13 +7,13 @@ Anything that comes to your mind!
 
 Chapter 10 todos:
 i) Add a Send a newsletter issue link to the admin dashboard; -- done
-ii)Add an HTML form at GET /admin/newsletters to submit a new issue;
-iii)Adapt POST /newsletters to process the form data:
+ii)Add an HTML form at GET /admin/newsletters to submit a new issue; -- done
+iii)Adapt POST /newsletters to process the form data:  -- done
 
     Change the route to POST /admin/newsletters;
     Migrate from 'Basic' to session-based authentication;
     Use the Form extractor (application/x-www-form-urlencoded) instead of the Json extractor (application/json) to handle the request body;
-    Adapt the test suite.
+    Adapt the test suite. -- done
 
 
 
