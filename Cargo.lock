@@ -1984,6 +1984,7 @@ dependencies = [
  "serde",
  "serde-aux",
  "serde_json",
+ "serde_urlencoded",
  "sqlx",
  "thiserror 2.0.18",
  "tokio",
