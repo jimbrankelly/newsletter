@@ -1,5 +1,5 @@
 use actix_web::{
-    HttpResponse, body::MessageBody, web 
+    HttpResponse, web 
 };
 use actix_web_flash_messages::FlashMessage;
 use anyhow::Context;
@@ -8,7 +8,7 @@ use sqlx::PgPool;
 use crate::{
     authentication::UserId,
     email_client::EmailClient,
-    idempotency::{IdempotencyKey, get_saved_response, save_response, },
+    idempotency::{IdempotencyKey, NextAction, try_processing, save_response, },
     routes::get_confirmed_subscribers,
     utils::{see_other, e500, e400, },
 };
@@ -62,22 +62,16 @@ pub async fn publish_newsletter_admin(
     }
  
     let idempotency_key: IdempotencyKey = idempotency_key.try_into().map_err(e400)?;
-
-    // Return early if we have a saved response in the database 
-    if let Some(saved_response) = get_saved_response(
-            &pool, 
-            &idempotency_key, 
-            *user_id
-        )
+    let transaction = match try_processing(&pool, &idempotency_key, *user_id)
         .await
         .map_err(e500)?
     {
-        dbg!("Publish returning saved response\n");
-        //dbg!(response_html);
-        // assuming if there is a saved response it must be published successfully.
-        FlashMessage::error("Your newsletter has been published.").send();
-        return Ok(saved_response);
-    }
+        NextAction::StartProcessing(t) => t,
+        NextAction::ReturnSavedResponse(saved_response) => {
+            success_message().send();
+            return Ok(saved_response);
+        },
+    };
 
     let subscribers = get_confirmed_subscribers(&pool)
         .await
@@ -107,12 +101,14 @@ pub async fn publish_newsletter_admin(
         }
     }
 
-    FlashMessage::error("Your newsletter has been published.").send();
+    success_message().send();
     let response = see_other("/admin/newsletters");
-    let response = save_response(&pool, &idempotency_key, *user_id, response)
+    let response = save_response(transaction, &idempotency_key, *user_id, response)
         .await
         .map_err(e500)?;
-    dbg!("Publish returning normally\n");
     Ok(response)
-    //Ok(see_other("/admin/newsletters"))
+}
+
+fn success_message() -> FlashMessage {
+    FlashMessage::info("Your newsletter has been published.")
 }
