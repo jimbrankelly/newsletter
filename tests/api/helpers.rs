@@ -335,6 +335,16 @@ impl TestUser {
         .await
         .expect("Failed to store test user.");
     }
+
+        //app.test_user.login(&app).await;
+    pub async fn login(&self, app: &TestApp) -> () {
+        let login_body = serde_json::json!({
+            "username": self.username,
+            "password": self.password.expose_secret()
+        });
+        let response = app.post_login(&login_body).await;
+        assert_is_redirect_to(&response, "/admin/dashboard");
+    }
 }
 
 pub fn assert_is_redirect_to(response: &reqwest::Response, location: &str) {
